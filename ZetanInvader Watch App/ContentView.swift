@@ -27,9 +27,10 @@ struct ContentView: View {
             if isGameRunning {
                 SpriteView(scene: gameScene)
                     .focusable()
-                    .digitalCrownRotation($scrollAmount, from: -10.0, through: 10.0, by: 0.1, sensitivity: .medium, isContinuous: true, isHapticFeedbackEnabled: true)
+                    .digitalCrownRotation($scrollAmount, from: -Double.infinity, through: Double.infinity, by: 1.0, sensitivity: .high, isContinuous: true, isHapticFeedbackEnabled: true)
                     .onChange(of: scrollAmount) { oldValue, newValue in
-                        self.gameScene.updatePlayerPosition(scrollAmount: newValue)
+                        let delta = newValue - oldValue
+                        self.gameScene.updatePlayerPosition(scrollDelta: delta)
                     }
                     .onTapGesture {
                         self.gameScene.playerFire()
