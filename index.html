@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZetanInvader | Retro WatchOS Arcade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Classic Phosphor Green */
+            --main-color: #33ff33; 
+            --dim-color: #00cc00;
+            --bg-color: #050505;
+            --grid-color: #111;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--main-color);
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            
+            /* Dot Matrix Background Effect */
+            background-image: 
+                radial-gradient(var(--grid-color) 15%, transparent 16%),
+                radial-gradient(var(--grid-color) 15%, transparent 16%);
+            background-size: 4px 4px;
+            background-position: 0 0, 2px 2px;
+        }
+
+        /* Scanline Effect overlay */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.1) 50%,
+                rgba(0,0,0,0.1)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* CRT Text Glow */
+        h1, h2, h3, p, li {
+            text-shadow: 0 0 2px var(--dim-color);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--main-color);
+            padding-bottom: 40px;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            animation: flicker 4s infinite;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--dim-color);
+            margin-top: 10px;
+        }
+
+        /* Game Asset Placeholder styling */
+        .game-icon {
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+            /* Replace with your ship image */
+            background-image: url('ship.png'); 
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: pixelated; /* Keeps pixel art sharp */
+            border: 2px dashed var(--dim-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Fallback if no image is found */
+        .game-icon::before {
+            content: "[SHIP]";
+            display: block;
+        }
+
+        section {
+            margin-bottom: 50px;
+            border: 1px solid var(--dim-color);
+            padding: 20px;
+            background: rgba(0, 20, 0, 0.7);
+            box-shadow: 0 0 10px rgba(51, 255, 51, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+            border-bottom: 1px dashed var(--main-color);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        ul {
+            list-style-type: square;
+        }
+
+        .privacy-box {
+            font-size: 0.9rem;
+            border: 1px dotted var(--main-color);
+            padding: 15px;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 60px;
+            border-top: 1px solid var(--dim-color);
+            padding-top: 20px;
+        }
+
+        a {
+            color: var(--main-color);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--main-color);
+        }
+        
+        a:hover {
+            background-color: var(--main-color);
+            color: var(--bg-color);
+        }
+
+        /* Animations */
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                opacity: 1;
+                text-shadow: 0 0 4px var(--main-color);
+            }
+            20%, 24%, 55% {
+                opacity: 0.8;
+                text-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="game-icon"></div>
+            <h1>ZetanInvader</h1>
+            <div class="subtitle">WATCH_OS // TACTICAL_SURVIVAL // V1.0</div>
+        </header>
+
+        <section id="about">
+            <h2>Mission Briefing</h2>
+            <p>
+                Pilot your Zetan ship through a digital asteroid field while dodging incoming enemy fighters. 
+                Styled with a nostalgic green-on-black dot matrix display inspired by classic "Invader" themes 
+                and Fallout aesthetics.
+            </p>
+        </section>
+
+        <section id="gameplay">
+            <h2>Flight Controls & Gameplay</h2>
+            <p><strong>Status:</strong> Active //
