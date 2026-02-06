@@ -1,0 +1,270 @@
+/* IMPORT RETRO FONT */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+:root {
+    --phosphor-main: #18ff6d; /* Classic Fallout 3/4 Pip-Boy Green */
+    --phosphor-dim: #0f8f42;
+    --screen-bg: #0d120f; /* Very dark green/black */
+    --scanline-color: rgba(0, 0, 0, 0.5);
+    --bezel-color: #111;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    font-family: 'VT323', monospace;
+    height: 100vh;
+    overflow: hidden; /* Prevents scrollbars from breaking the CRT effect */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--phosphor-main);
+}
+
+/* --- CRT SCREEN CONTAINER --- */
+.terminal-wrapper {
+    width: 95vw;
+    height: 90vh;
+    max-width: 1000px;
+    background-color: var(--screen-bg);
+    border-radius: 20px;
+    position: relative;
+    box-shadow: 
+        0 0 0 10px var(--bezel-color),
+        inset 0 0 100px rgba(0,0,0,0.9); /* Vignette */
+    padding: 40px;
+    overflow-y: auto; /* Allow scrolling inside the screen */
+    border: 2px solid #333;
+}
+
+/* --- ANIMATED OVERLAYS --- */
+
+/* 1. Moving Scanline */
+.scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 10;
+    background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(24, 255, 109, 0.1) 50%, rgba(0,0,0,0) 100%);
+    opacity: 0.1;
+    position: absolute;
+    bottom: 100%;
+    pointer-events: none;
+    animation: scanline 10s linear infinite;
+}
+
+@keyframes scanline {
+    0% { bottom: 100%; }
+    100% { bottom: -100%; }
+}
+
+/* 2. CRT Flicker & Lines */
+.screen-overlay {
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 3px 100%;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9;
+    pointer-events: none;
+    animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+    0% { opacity: 0.97; }
+    50% { opacity: 1; }
+    100% { opacity: 0.98; }
+}
+
+/* --- TEXT STYLING --- */
+h1, h2, h3, p, a, li {
+    text-shadow: 0 0 4px var(--phosphor-dim), 0 0 2px var(--phosphor-main);
+    text-transform: uppercase;
+}
+
+a {
+    color: var(--phosphor-main);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--phosphor-main);
+}
+a:hover {
+    background-color: var(--phosphor-main);
+    color: var(--screen-bg);
+}
+
+/* --- BOOT SEQUENCE --- */
+#boot-sequence {
+    font-size: 1.5rem;
+    padding-top: 20%;
+    text-align: left;
+}
+.loading::after {
+    content: " .";
+    animation: dots 1s steps(5, end) infinite;
+}
+@keyframes dots {
+    0%, 20% { content: " ."; }
+    40% { content: " .."; }
+    60% { content: " ..."; }
+    80%, 100% { content: ""; }
+}
+
+/* --- PIP-BOY INTERFACE --- */
+
+/* Header */
+.pip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--phosphor-main);
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+}
+.pip-header h1 {
+    font-size: 3rem;
+    margin: 0;
+    line-height: 1;
+}
+.header-decoration {
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+.header-decoration:first-child {
+    text-align: left;
+}
+
+/* Tabs */
+.pip-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.tab-btn {
+    background: transparent;
+    border: 1px solid var(--phosphor-dim);
+    color: var(--phosphor-dim);
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    padding: 5px 20px;
+    cursor: pointer;
+    flex-grow: 1;
+    text-shadow: none;
+    transition: all 0.2s;
+}
+.tab-btn:hover, .tab-btn.active {
+    background-color: var(--phosphor-main);
+    color: var(--screen-bg);
+    border-color: var(--phosphor-main);
+    box-shadow: 0 0 10px var(--phosphor-main);
+}
+
+/* Content Area */
+.content-area {
+    min-height: 300px;
+    position: relative;
+}
+
+.tab-content {
+    display: none; /* Hidden by default */
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
+}
+.tab-content.active {
+    opacity: 1;
+    display: block;
+}
+
+/* Hero Section */
+.hero-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+}
+.ship-container {
+    width: 200px;
+    height: 200px;
+    border: 2px dashed var(--phosphor-main);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: float 4s ease-in-out infinite;
+    background: radial-gradient(circle, rgba(24,255,109,0.1) 0%, rgba(0,0,0,0) 70%);
+}
+
+.ship-image {
+    width: 70%;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 5px var(--phosphor-main));
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Typewriter effect for text */
+.typewriter {
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: .15em solid var(--phosphor-main);
+    animation: 
+        typing 3.5s steps(40, end),
+        blink-caret .75s step-end infinite;
+    max-width: fit-content;
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: var(--phosphor-main); }
+}
+
+.green-list {
+    list-style: square;
+}
+
+.holotape-box {
+    border: 1px solid var(--phosphor-main);
+    padding: 15px;
+    background: rgba(24, 255, 109, 0.05);
+    margin: 20px 0;
+}
+
+/* Footer */
+.pip-footer {
+    margin-top: 30px;
+    border-top: 2px solid var(--phosphor-main);
+    padding-top: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.scrolling-text span {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marquee 15s linear infinite;
+}
+
+@keyframes marquee {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-100%, 0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .pip-header h1 { font-size: 2rem; }
+    .terminal-wrapper { padding: 15px; width: 100vw; height: 100vh; border: none; border-radius: 0; }
+    .hero-section { flex-direction: column; }
+}
