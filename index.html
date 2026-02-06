@@ -3,195 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZetanInvader | Retro WatchOS Arcade</title>
+    <title>ZetanInvader | WatchOS Tactical Sim</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            /* Classic Phosphor Green */
-            --main-color: #33ff33; 
-            --dim-color: #00cc00;
-            --bg-color: #050505;
-            --grid-color: #111;
-        }
-
-        * {
-            box-sizing: border-box;
+            /* Pip-Boy Green Palette */
+            --terminal-green: #33ff33;
+            --terminal-dim: #008f00;
+            --terminal-bg: #0a0a0a;
+            --grid-color: rgba(51, 255, 51, 0.1);
         }
 
         body {
+            background-color: var(--terminal-bg);
+            color: var(--terminal-green);
+            font-family: 'VT323', monospace;
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color);
-            color: var(--main-color);
-            font-family: 'VT323', monospace;
-            font-size: 1.2rem;
-            line-height: 1.5;
+            line-height: 1.4;
+            font-size: 1.3rem;
+            overflow-x: hidden;
             
-            /* Dot Matrix Background Effect */
+            /* CRT Grid Effect */
             background-image: 
-                radial-gradient(var(--grid-color) 15%, transparent 16%),
-                radial-gradient(var(--grid-color) 15%, transparent 16%);
-            background-size: 4px 4px;
-            background-position: 0 0, 2px 2px;
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
-        /* Scanline Effect overlay */
-        body::after {
-            content: "";
+        /* Scanline Overlay */
+        body::before {
+            content: " ";
+            display: block;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0),
-                rgba(255,255,255,0) 50%,
-                rgba(0,0,0,0.1) 50%,
-                rgba(0,0,0,0.1)
-            );
-            background-size: 100% 4px;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 100;
+            background-size: 100% 2px, 3px 100%;
             pointer-events: none;
-            z-index: 999;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 2rem;
             position: relative;
-            z-index: 1;
+            z-index: 101;
         }
 
-        /* CRT Text Glow */
-        h1, h2, h3, p, li {
-            text-shadow: 0 0 2px var(--dim-color);
-        }
-
-        header {
-            text-align: center;
-            border-bottom: 2px solid var(--main-color);
-            padding-bottom: 40px;
-            margin-bottom: 40px;
+        /* Glitch/Flicker Animation for Titles */
+        @keyframes flicker {
+            0% { opacity: 0.9; }
+            5% { opacity: 0.8; }
+            10% { opacity: 1; }
+            15% { opacity: 0.1; }
+            20% { opacity: 1; }
+            100% { opacity: 1; }
         }
 
         h1 {
             font-size: 4rem;
-            margin: 0;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            text-shadow: 0 0 10px var(--terminal-green);
+            margin-bottom: 0;
+            text-align: center;
             animation: flicker 4s infinite;
         }
 
         .subtitle {
-            font-size: 1.5rem;
-            color: var(--dim-color);
-            margin-top: 10px;
+            text-align: center;
+            border-bottom: 2px solid var(--terminal-green);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            color: var(--terminal-dim);
+            letter-spacing: 2px;
         }
 
-        /* Game Asset Placeholder styling */
-        .game-icon {
-            width: 120px;
-            height: 120px;
-            margin: 20px auto;
-            /* Replace with your ship image */
-            background-image: url('ship.png'); 
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: pixelated; /* Keeps pixel art sharp */
-            border: 2px dashed var(--dim-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* Fallback if no image is found */
-        .game-icon::before {
-            content: "[SHIP]";
-            display: block;
-        }
-
-        section {
-            margin-bottom: 50px;
-            border: 1px solid var(--dim-color);
-            padding: 20px;
-            background: rgba(0, 20, 0, 0.7);
-            box-shadow: 0 0 10px rgba(51, 255, 51, 0.1);
+        .section-box {
+            border: 1px solid var(--terminal-green);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 0 15px rgba(51, 255, 51, 0.1);
+            background-color: rgba(0, 0, 0, 0.8);
         }
 
         h2 {
             margin-top: 0;
-            border-bottom: 1px dashed var(--main-color);
-            padding-bottom: 10px;
+            background-color: var(--terminal-green);
+            color: var(--terminal-bg);
             display: inline-block;
+            padding: 0 10px;
+            text-transform: uppercase;
         }
 
-        ul {
-            list-style-type: square;
+        /* Simulating the ship if image is missing, otherwise frames the image */
+        .hero-image {
+            display: block;
+            margin: 0 auto 2rem auto;
+            width: 128px;
+            height: 128px;
+            border: 2px dashed var(--terminal-dim);
+            /* Place 'ship.png' in the same folder */
+            background-image: url('ship.png'); 
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: pixelated;
         }
 
-        .privacy-box {
-            font-size: 0.9rem;
-            border: 1px dotted var(--main-color);
-            padding: 15px;
+        ul.data-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul.data-list li::before {
+            content: "> ";
+            color: var(--terminal-dim);
+        }
+
+        a {
+            color: var(--terminal-green);
+            text-decoration: underline;
+        }
+
+        a:hover {
+            background-color: var(--terminal-green);
+            color: var(--terminal-bg);
+            text-decoration: none;
         }
 
         footer {
             text-align: center;
-            font-size: 0.8rem;
-            opacity: 0.7;
-            margin-top: 60px;
-            border-top: 1px solid var(--dim-color);
-            padding-top: 20px;
-        }
-
-        a {
-            color: var(--main-color);
-            text-decoration: none;
-            border-bottom: 1px dotted var(--main-color);
-        }
-        
-        a:hover {
-            background-color: var(--main-color);
-            color: var(--bg-color);
-        }
-
-        /* Animations */
-        @keyframes flicker {
-            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-                opacity: 1;
-                text-shadow: 0 0 4px var(--main-color);
-            }
-            20%, 24%, 55% {
-                opacity: 0.8;
-                text-shadow: none;
-            }
+            font-size: 0.9rem;
+            color: var(--terminal-dim);
+            margin-top: 4rem;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <div class="game-icon"></div>
-            <h1>ZetanInvader</h1>
-            <div class="subtitle">WATCH_OS // TACTICAL_SURVIVAL // V1.0</div>
-        </header>
+<div class="container">
+    <header>
+        <div class="hero-image" title="Zetan Ship Asset"></div>
+        <h1>Zetan Invader</h1>
+        <div class="subtitle">WATCH_OS // SIMULATION_V1.0 // PIP-BOY_COMPATIBLE</div>
+    </header>
 
-        <section id="about">
-            <h2>Mission Briefing</h2>
-            <p>
-                Pilot your Zetan ship through a digital asteroid field while dodging incoming enemy fighters. 
-                Styled with a nostalgic green-on-black dot matrix display inspired by classic "Invader" themes 
-                and Fallout aesthetics.
-            </p>
-        </section>
+    <div class="section-box">
+        <h2>:: LORE DATABASE ::</h2>
+        <p>
+            <strong>ARCHIVE REFERENCE:</strong> Holotape "Zeta Invaders" [Source: Nick Valentine's Desk / Diamond City]
+        </p>
+        <p>
+            Recovered from the archives of the Commonwealth, the <strong>Zetan Invaders</strong> program was originally a static defense simulation found on RobCo Fun magazines. The goal was simple: destroy the alien fleet before they made planetfall.
+        </p>
+        <p>
+            <strong>UPDATE:</strong> This software has been recompiled for modern wrist-mounted hardware (watchOS). The simulation has evolved. You are no longer manning a turret; you are piloting an interceptor. The Zetan threat is now a survival endurance test through a digital asteroid field.
+        </p>
+    </div>
 
-        <section id="gameplay">
-            <h2>Flight Controls & Gameplay</h2>
-            <p><strong>Status:</strong> Active //
+    <div class="section-box">
+        <h2>:: FLIGHT MANUAL ::</h2>
+        <p>Pilot your vessel through the void while dodging debris and returning fire. A nostalgic green-on-black dot matrix display brings the retro-future to your wrist.</p>
+        
+        <ul class="data-list">
+            <li><strong>DIGITAL CROWN:</strong> Rotate for precision steering [Left/Right].</li>
+            <li><strong>TAP SCREEN:</strong> Engage plasma cannons.</li>
+            <li><strong>HAPTICS:</strong> Force feedback enabled for impacts and weapons fire.</li>
+        </ul>
+        
+        <p><em>WARNING: One hit from an asteroid or enemy fighter results in immediate hull failure (Game Over).</em></p>
+    </div>
+
+    <div class="section-box">
+        <h2>:: PRIVACY PROTOCOL ::</h2>
+        <p><strong>STATUS: SECURE</strong></p>
+        <p>Zetan Invader does <strong>NOT</strong> collect, store, or transmit any personal data. There are no tracking beacons, no advertising identifiers, and no third-party uplinks.</p>
+        <p>All flight logs (High Scores) are stored locally on your device.</p>
+        <p style="font-size: 0.9em; color: var(--terminal-dim);">[Last Updated: 06/01/2026]</p>
+    </div>
+
+    <footer>
+        <p>DEVELOPED BY ARISTIDES LINTZERIS</p>
+        <p>INSPIRED BY FALLOUT 4 & SPACE INVADERS (1978)</p>
+        <p><a href="mailto:aristideslintzeris@icloud.com">CONTACT COMMAND</a></p>
+    </footer>
+</div>
+
+</body>
+</html>
