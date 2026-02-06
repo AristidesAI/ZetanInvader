@@ -7,114 +7,51 @@
 
 import SwiftUI
 import SpriteKit
-import WatchKit
 
 struct ContentView: View {
-    @State private var scrollAmount = 0.0
-    @State private var isGameRunning = false
-    @State private var gameScene: GameScene = {
-        let scene = GameScene(size: CGSize(width: 200, height: 200)) // Initial placeholder size
-        scene.scaleMode = .resizeFill
-        return scene
-    }()
-    @State private var showGameOver = false
-    @State private var score = 0
+    @State private var crownValue = 0.0
+    @State private var gameController = GameController()
     
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             
-            if isGameRunning {
-                SpriteView(scene: gameScene)
-                    .focusable()
-                    .digitalCrownRotation($scrollAmount, from: -Double.infinity, through: Double.infinity, by: 1.0, sensitivity: .high, isContinuous: true, isHapticFeedbackEnabled: true)
-                    .onChange(of: scrollAmount) { oldValue, newValue in
-                        let delta = newValue - oldValue
-                        self.gameScene.updatePlayerPosition(scrollDelta: delta)
-                    }
-                    .onTapGesture {
-                        self.gameScene.playerFire()
-                    }
-                    .onAppear {
-                        setupSceneCallbacks()
-                    }
-                    .ignoresSafeArea()
-            } else {
-                // Start Menu
-                VStack(spacing: 20) {
-                    Text("ZETAN\nINVADER")
-                        .font(.custom("Courier", size: 24))
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.green)
-                        .shadow(color: .green.opacity(0.8), radius: 5)
-                    
-                    Button(action: startGame) {
-                        Text("ENGAGE")
-                            .font(.custom("Courier", size: 16))
-                            .fontWeight(.bold)
-                            .foregroundStyle(.black)
-                    }
-                    .background(Color.green)
-                    .clipShape(Capsule())
-                }
-            }
-            
-            // Game Over Overlay
-            if showGameOver {
-                VStack(spacing: 15) {
-                    Text("GAME OVER")
-                        .font(.custom("Courier", size: 26))
-                        .foregroundColor(.red)
-                        .shadow(color: .red, radius: 10)
-                    
-                    Text("SCORE: \(score)")
-                        .font(.custom("Courier", size: 18))
-                        .foregroundColor(.green)
-                    
-                    Button("RETRY") {
-                        restartGame()
-                    }
-                    .tint(.green)
-                }
-                .padding()
-                .background(Color.black.opacity(0.85))
-                .cornerRadius(10)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.green, lineWidth: 2)
-                )
-            }
+            SpriteView(scene: gameController.scene)
+                .ignoresSafeArea()
+        }
+        .focusable()
+        .digitalCrownRotation(
+            $crownValue,
+            from: -100,
+            through: 100,
+            by: 0.5,
+            sensitivity: .medium,
+            isContinuous: false,
+            isHapticFeedbackEnabled: false
+        )
+        .onChange(of: crownValue) { oldValue, newValue in
+            gameController.updatePlayerPosition(crownValue: newValue)
+        }
+        .onTapGesture {
+            gameController.fire()
         }
     }
+}
+
+class GameController {
+    let scene: GameScene
     
-    func setupSceneCallbacks() {
-        gameScene.gameOverAction = {
-            WKInterfaceDevice.current().play(.failure)
-            withAnimation {
-                showGameOver = true
-            }
-        }
-        gameScene.scoreUpdateAction = { newScore in
-            self.score = newScore
-        }
+    init() {
+        scene = GameScene(size: CGSize(width: 200, height: 200))
+        scene.scaleMode = .aspectFill
     }
     
-    func startGame() {
-        setupSceneCallbacks()
-        withAnimation {
-            isGameRunning = true
-            showGameOver = false
-            scrollAmount = 0
-            gameScene.startGame()
-        }
-        WKInterfaceDevice.current().play(.start)
+    func updatePlayerPosition(crownValue: Double) {
+        scene.setPlayerPosition(crownValue)
     }
     
-    func restartGame() {
-        showGameOver = false
-        gameScene.startGame()
-        WKInterfaceDevice.current().play(.click)
+    func fire() {
+        scene.handleTap()
     }
 }
 

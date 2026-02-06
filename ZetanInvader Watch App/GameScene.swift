@@ -6,407 +6,678 @@
 //
 
 import SpriteKit
-import SwiftUI
 import WatchKit
-
-// MARK: - Collision Categories
-struct PhysicsCategory {
-    static let none: UInt32 = 0
-    static let player: UInt32 = 0x1 << 0
-    static let alien: UInt32 = 0x1 << 1
-    static let obstacle: UInt32 = 0x1 << 2
-    static let projectile: UInt32 = 0x1 << 3
-    static let alienProjectile: UInt32 = 0x1 << 4
-    static let floor: UInt32 = 0x1 << 5
-}
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
-    // MARK: - Properties
-    var player: SKSpriteNode!
-    var scoreLabel: SKLabelNode!
-    
-    var aliens: [SKSpriteNode] = []
-    var alienDirection: CGFloat = 1.0 // 1.0 for right, -1.0 for left
-    var alienMoveSpeed: CGFloat = 10.0
-    var lastAlienMoveTime: TimeInterval = 0
-    var alienMoveInterval: TimeInterval = 0.8 // Move every 0.8 seconds (stepped movement)
-    
-    var score: Int = 0 {
-        didSet {
-            scoreLabel?.text = "Score: \(score)"
-            scoreUpdateAction?(score)
-        }
+    // MARK: - Physics Categories
+    struct PhysicsCategory {
+        static let none: UInt32 = 0
+        static let player: UInt32 = 0b1
+        static let alien: UInt32 = 0b10
+        static let obstacle: UInt32 = 0b100
+        static let playerProjectile: UInt32 = 0b1000
+        static let alienProjectile: UInt32 = 0b10000
     }
     
-    var isGameOver = false
+    // MARK: - Game State
+    enum GameState {
+        case menu
+        case playing
+        case gameOver
+    }
     
-    // Binding callbacks
-    var gameOverAction: (() -> Void)?
-    var scoreUpdateAction: ((Int) -> Void)?
+    private var gameState: GameState = .menu
+    private var isSetup = false
+    private var isGameOver = false
+    private var score = 0
+    private var lives = 3
+    
+    // MARK: - Game Objects
+    private var player: SKSpriteNode?
+    private var aliens: [SKSpriteNode] = []
+    private var bonusAliens: [SKSpriteNode] = []
+    private var obstacles: [Obstacle] = []
+    
+    // MARK: - Alien Movement & Firing
+    private var alienDirection: CGFloat = 1.0
+    private var alienMoveInterval: TimeInterval = 0.8
+    private var lastAlienMoveTime: TimeInterval = 0
+    private var lastAlienFireTime: TimeInterval = 0
+    private var alienFireInterval: TimeInterval = 2.0
+    
+    // MARK: - Bonus Alien
+    private var lastBonusSpawnTime: TimeInterval = 0
+    private var bonusSpawnInterval: TimeInterval = 15.0
+    
+    // MARK: - Colors (Dot Matrix Green)
+    private let matrixGreen = SKColor(red: 0, green: 1, blue: 0, alpha: 1)
+    private let matrixGreenDim = SKColor(red: 0, green: 0.7, blue: 0, alpha: 1)
+    
+    // MARK: - UI
+    private let scoreLabel = SKLabelNode(fontNamed: "Helvetica")
+    private let statusLabel = SKLabelNode(fontNamed: "Helvetica")
+    private let livesLabel = SKLabelNode(fontNamed: "Helvetica")
     
     // MARK: - Lifecycle
     override func sceneDidLoad() {
-        physicsWorld.gravity = CGVector(dx: 0, dy: 0)
+        super.sceneDidLoad()
+        physicsWorld.gravity = .zero
         physicsWorld.contactDelegate = self
-        backgroundColor = SKColor.black
+        backgroundColor = .black
+    }
+    
+    override func didChangeSize(_ oldSize: CGSize) {
+        super.didChangeSize(oldSize)
         
-        // Initial setup for static elements if needed, 
-        // but main setup happens in didMove(to:) or startGame()
-        if player == nil {
-            setupUI()
+        // Only setup once we have reasonable dimensions
+        if !isSetup && size.width > 100 && size.height > 100 {
+            isSetup = true
+            DispatchQueue.main.async { [weak self] in
+                self?.setupGame()
+            }
         }
     }
     
     // MARK: - Setup
-    func setupUI() {
-        // Score Label
-        scoreLabel = SKLabelNode(fontNamed: "Courier")
-        scoreLabel.text = "Score: 0"
-        scoreLabel.fontSize = 16
-        scoreLabel.fontColor = .green
-        scoreLabel.position = CGPoint(x: frame.minX + 10, y: frame.maxY - 25)
-        scoreLabel.horizontalAlignmentMode = .left
-        scoreLabel.zPosition = 100
-        addChild(scoreLabel)
+    private func setupGame() {
+        setupUI()
+        resetGame()
     }
     
-    func setupPlayer() {
-        // Ship Texture
+    private func setupUI() {
+        // Score label
+        scoreLabel.fontSize = 12
+        scoreLabel.fontColor = matrixGreen
+        scoreLabel.horizontalAlignmentMode = .left
+        scoreLabel.verticalAlignmentMode = .top
+        scoreLabel.position = CGPoint(x: 5, y: size.height - 5)
+        scoreLabel.zPosition = 100
+        scoreLabel.isHidden = true // Hidden until game starts
+        addChild(scoreLabel)
+        
+        // Lives label
+        livesLabel.fontSize = 12
+        livesLabel.fontColor = matrixGreen
+        livesLabel.horizontalAlignmentMode = .right
+        livesLabel.verticalAlignmentMode = .top
+        livesLabel.position = CGPoint(x: size.width - 5, y: size.height - 5)
+        livesLabel.zPosition = 100
+        livesLabel.isHidden = true // Hidden until game starts
+        addChild(livesLabel)
+        
+        // Status label (used for menu and game over)
+        statusLabel.fontSize = 14
+        statusLabel.fontColor = matrixGreen
+        statusLabel.horizontalAlignmentMode = .center
+        statusLabel.verticalAlignmentMode = .center
+        statusLabel.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        statusLabel.zPosition = 100
+        statusLabel.text = "TAP TO START"
+        statusLabel.isHidden = false
+        addChild(statusLabel)
+    }
+    
+    private func resetGame() {
+        // Clear existing game objects
+        children.forEach { node in
+            if node != scoreLabel && node != statusLabel {
+                node.removeFromParent()
+            }
+        }
+        
+        aliens.removeAll()
+        bonusAliens.removeAll()
+        obstacles.removeAll()
+        player = nil
+        
+        // Reset state
+        isGameOver = false
+        score = 0
+        lives = 3
+        alienDirection = 1.0
+        alienMoveInterval = 0.8
+        lastAlienMoveTime = 0
+        lastAlienFireTime = 0
+        lastBonusSpawnTime = 0
+        
+        updateScore()
+        updateLives()
+        scoreLabel.isHidden = false
+        livesLabel.isHidden = false
+        statusLabel.isHidden = true
+        
+        // Update game state
+        gameState = .playing
+        isGameOver = false
+        
+        // Create game objects
+        createPlayer()
+        createAliens()
+        createObstacles()
+    }
+    
+    private func createPlayer() {
+        // Use ship texture with green tint
         let texture = SKTexture(imageNamed: "ship_1")
         player = SKSpriteNode(texture: texture)
-        player.color = .green
-        player.colorBlendFactor = 1.0 // Apply tint if needed, or rely on texture
-        player.size = CGSize(width: 30, height: 20)
-        player.position = CGPoint(x: frame.midX, y: frame.minY + 30)
-        player.name = "player"
+        
+        guard let player = player else { return }
+        
+        player.color = matrixGreen
+        player.colorBlendFactor = 0.5
+        player.size = CGSize(width: 20, height: 15)
+        player.position = CGPoint(x: size.width / 2, y: 25)
+        player.zPosition = 10
         
         player.physicsBody = SKPhysicsBody(rectangleOf: player.size)
-        player.physicsBody?.isDynamic = true
+        player.physicsBody?.isDynamic = false
         player.physicsBody?.categoryBitMask = PhysicsCategory.player
-        player.physicsBody?.contactTestBitMask = PhysicsCategory.alien | PhysicsCategory.alienProjectile
-        player.physicsBody?.collisionBitMask = 0
+        player.physicsBody?.contactTestBitMask = PhysicsCategory.alien
+        player.physicsBody?.collisionBitMask = PhysicsCategory.none
         
         addChild(player)
     }
     
-    func setupAliens() {
-        aliens.removeAll()
-        alienDirection = 1.0
-        alienMoveInterval = 0.8
+    private func createAliens() {
+        let rows = 3
+        let cols = 5
+        let alienWidth: CGFloat = 16
+        let alienHeight: CGFloat = 12
+        let spacingX: CGFloat = 24
+        let spacingY: CGFloat = 18
         
-        let startX = frame.minX + 30
-        let startY = frame.maxY - 40
-        let xSpacing: CGFloat = 25
-        let ySpacing: CGFloat = 20
+        let totalWidth = CGFloat(cols - 1) * spacingX
+        let startX = (size.width - totalWidth) / 2
+        let startY = size.height - 40
         
-        // 4 rows, 5 columns (adjust based on watch screen size)
-        for row in 0..<4 {
-            for col in 0..<5 {
-                let alien = createAlien(row: row, col: col)
-                let x = startX + CGFloat(col) * xSpacing
-                let y = startY - CGFloat(row) * ySpacing
-                alien.position = CGPoint(x: x, y: y)
+        for row in 0..<rows {
+            for col in 0..<cols {
+                // Use alien textures with animation
+                let alienType = (row % 5) + 1
+                let texture1 = SKTexture(imageNamed: "alien_\(alienType * 2 - 1)")
+                let texture2 = SKTexture(imageNamed: "alien_\(alienType * 2)")
+                
+                let alien = SKSpriteNode(texture: texture1)
+                alien.color = matrixGreen
+                alien.colorBlendFactor = 0.5
+                alien.size = CGSize(width: alienWidth, height: alienHeight)
+                alien.position = CGPoint(
+                    x: startX + CGFloat(col) * spacingX,
+                    y: startY - CGFloat(row) * spacingY
+                )
+                alien.zPosition = 5
+                
+                alien.physicsBody = SKPhysicsBody(rectangleOf: alien.size)
+                alien.physicsBody?.isDynamic = false
+                alien.physicsBody?.categoryBitMask = PhysicsCategory.alien
+                alien.physicsBody?.contactTestBitMask = PhysicsCategory.playerProjectile | PhysicsCategory.player
+                alien.physicsBody?.collisionBitMask = PhysicsCategory.none
+                
+                // Animate between frames
+                let animation = SKAction.repeatForever(
+                    SKAction.animate(with: [texture1, texture2], timePerFrame: 0.5)
+                )
+                alien.run(animation)
+                
                 addChild(alien)
                 aliens.append(alien)
             }
         }
     }
     
-    func createAlien(row: Int, col: Int) -> SKSpriteNode {
-        // Cycles through alien textures for rows
-        // alien_1...10 mapped to rows/types
-        let textureIndex = (row % 5) * 2 + 1 // e.g. row 0 uses alien_1 & alien_2
-        let textureName = "alien_\(textureIndex)"
-        let texture = SKTexture(imageNamed: textureName)
-        
-        let node = SKSpriteNode(texture: texture)
-        node.name = "alien"
-        node.color = .green
-        node.colorBlendFactor = 1.0
-        node.size = CGSize(width: 20, height: 16)
-        
-        node.physicsBody = SKPhysicsBody(rectangleOf: node.size)
-        node.physicsBody?.categoryBitMask = PhysicsCategory.alien
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.player | PhysicsCategory.obstacle | PhysicsCategory.projectile
-        node.physicsBody?.collisionBitMask = 0
-        
-        // Animation
-        let nextTextureName = "alien_\(textureIndex + 1)"
-        let nextTexture = SKTexture(imageNamed: nextTextureName)
-        let animation = SKAction.animate(with: [texture, nextTexture], timePerFrame: 0.5)
-        node.run(SKAction.repeatForever(animation))
-        
-        return node
-    }
-    
-    func setupObstacles() {
-        // Place 4 obstacles
+    private func createObstacles() {
         let count = 4
-        let spacing = frame.width / CGFloat(count)
-        let startX = frame.minX + spacing / 2
-        let yPos = frame.minY + 60
+        let spacing = size.width / CGFloat(count + 1)
         
-        for i in 0..<count {
-            let obstacle = ObstacleNode()
-            obstacle.position = CGPoint(x: startX + CGFloat(i) * spacing, y: yPos)
+        for i in 1...count {
+            let obstacle = Obstacle(matrixGreen: matrixGreen)
+            obstacle.position = CGPoint(x: CGFloat(i) * spacing, y: 55)
+            obstacle.zPosition = 5
             addChild(obstacle)
+            obstacles.append(obstacle)
         }
     }
     
-    // MARK: - Game Loop
-    
-    func startGame() {
-        isGameOver = false
-        score = 0
-        
-        // Clean up
-        enumerateChildNodes(withName: "alien") { node, _ in node.removeFromParent() }
-        enumerateChildNodes(withName: "obstacle") { node, _ in node.removeFromParent() }
-        enumerateChildNodes(withName: "projectile") { node, _ in node.removeFromParent() }
-        player?.removeFromParent()
-        
-        setupPlayer()
-        setupAliens()
-        setupObstacles()
-        
-        lastAlienMoveTime = 0
-    }
-    
-    override func update(_ currentTime: TimeInterval) {
-        guard !isGameOver else { return }
-        
-        // Initial time check
-        if lastAlienMoveTime == 0 {
-            lastAlienMoveTime = currentTime
-        }
-        
-        // Step movement
-        if currentTime - lastAlienMoveTime > alienMoveInterval {
-            moveAliens()
-            lastAlienMoveTime = currentTime
-            
-            // Random alien fire
-            if Bool.random() && !aliens.isEmpty {
-                // alienFire() // TODO: Implement if needed
-            }
-        }
-    }
-    
-    func moveAliens() {
-        var hitEdge = false
-        
-        // Check edges
-        for alien in aliens {
-            let nextX = alien.position.x + (alienMoveSpeed * alienDirection)
-            if nextX > frame.maxX - 10 || nextX < frame.minX + 10 {
-                hitEdge = true
-                break
-            }
-        }
-        
-        if hitEdge {
-            // Move down and reverse
-            alienDirection *= -1
-            for alien in aliens {
-                alien.position.y -= 10
-                
-                // Game Over check
-                if alien.position.y < frame.minY + 60 { // Reached obstacle line
-                    gameOver()
-                }
-            }
-            
-            // Speed up
-            alienMoveInterval = max(0.1, alienMoveInterval * 0.9)
-            
-        } else {
-            // Move sideways
-            for alien in aliens {
-                alien.position.x += (alienMoveSpeed * alienDirection)
-            }
-        }
-    }
-    
-    // MARK: - Inputs
-    
-    func updatePlayerPosition(scrollDelta: Double) {
+    // MARK: - Input Handling
+    func setPlayerPosition(_ crownValue: Double) {
         guard !isGameOver, let player = player else { return }
         
-        // Move by delta * speed
-        let moveSpeed: CGFloat = 20.0
-        let newX = player.position.x + (CGFloat(scrollDelta) * moveSpeed)
+        // Map crown value (-100 to 100) to screen position
+        let normalizedValue = (crownValue + 100) / 200.0 // 0 to 1
+        let minX: CGFloat = 15
+        let maxX = size.width - 15
+        let targetX = minX + (CGFloat(normalizedValue) * (maxX - minX))
         
-        let clampedX = max(frame.minX + 15, min(frame.maxX - 15, newX))
-        player.position.x = clampedX
+        // Smooth movement
+        let currentX = player.position.x
+        let newX = currentX + (targetX - currentX) * 0.3
+        player.position.x = newX
     }
     
-    func playerFire() {
-        guard !isGameOver, let player = player else { return }
+    func handleTap() {
+        if gameState == .menu || gameState == .gameOver {
+            // Start or restart game
+            resetGame()
+        } else if gameState == .playing && !isGameOver {
+            // Fire projectile
+            fireProjectile()
+        }
+    }
+    
+    private func fireProjectile() {
+        guard let player = player else { return }
         
-        // Simple limit: Max 1 projectile on screen? (Optional classic feel)
-        // For now, allow fire.
-        
-        let projectile = SKSpriteNode(color: .green, size: CGSize(width: 2, height: 8))
-        projectile.name = "projectile"
-        projectile.position = CGPoint(x: player.position.x, y: player.position.y + 15)
+        let projectile = SKSpriteNode(color: matrixGreen, size: CGSize(width: 2, height: 8))
+        projectile.position = CGPoint(x: player.position.x, y: player.position.y + 10)
+        projectile.zPosition = 8
         
         projectile.physicsBody = SKPhysicsBody(rectangleOf: projectile.size)
         projectile.physicsBody?.isDynamic = true
-        projectile.physicsBody?.categoryBitMask = PhysicsCategory.projectile
+        projectile.physicsBody?.categoryBitMask = PhysicsCategory.playerProjectile
         projectile.physicsBody?.contactTestBitMask = PhysicsCategory.alien | PhysicsCategory.obstacle
-        projectile.physicsBody?.collisionBitMask = 0
+        projectile.physicsBody?.collisionBitMask = PhysicsCategory.none
         projectile.physicsBody?.usesPreciseCollisionDetection = true
         
         addChild(projectile)
         
-        let move = SKAction.moveBy(x: 0, y: frame.height, duration: 1.0)
-        let remove = SKAction.removeFromParent()
-        projectile.run(SKAction.sequence([move, remove]))
+        let moveAction = SKAction.moveBy(x: 0, y: size.height, duration: 1.0)
+        let removeAction = SKAction.removeFromParent()
+        projectile.run(SKAction.sequence([moveAction, removeAction]))
     }
     
-    // MARK: - Collision Delegate
+    // MARK: - Game Loop
+    override func update(_ currentTime: TimeInterval) {
+        guard isSetup && gameState == .playing && !isGameOver else { return }
+        
+        if lastAlienMoveTime == 0 {
+            lastAlienMoveTime = currentTime
+            lastAlienFireTime = currentTime
+            lastBonusSpawnTime = currentTime
+        }
+        
+        // Move aliens
+        if currentTime - lastAlienMoveTime >= alienMoveInterval {
+            moveAliens()
+            lastAlienMoveTime = currentTime
+        }
+        
+        // Alien firing
+        if currentTime - lastAlienFireTime >= alienFireInterval {
+            alienFire()
+            lastAlienFireTime = currentTime
+        }
+        
+        // Spawn bonus alien
+        if currentTime - lastBonusSpawnTime >= bonusSpawnInterval {
+            spawnBonusAlien()
+            lastBonusSpawnTime = currentTime
+        }
+        
+        // Update bonus aliens
+        updateBonusAliens()
+    }
+    
+    private func moveAliens() {
+        guard !aliens.isEmpty else { return }
+        
+        // Check if any alien will hit the edge
+        var shouldMoveDown = false
+        for alien in aliens {
+            let nextX = alien.position.x + (10 * alienDirection)
+            if nextX < 10 || nextX > size.width - 10 {
+                shouldMoveDown = true
+                break
+            }
+        }
+        
+        if shouldMoveDown {
+            // Move down and reverse direction
+            alienDirection *= -1
+            for alien in aliens {
+                alien.position.y -= 8
+                
+                // Check if aliens reached the player
+                if alien.position.y <= 30 {
+                    endGame(victory: false)
+                    return
+                }
+            }
+            
+            // Speed up slightly
+            alienMoveInterval = max(0.3, alienMoveInterval * 0.95)
+        } else {
+            // Move horizontally
+            for alien in aliens {
+                alien.position.x += (10 * alienDirection)
+            }
+        }
+    }
+    
+    private func alienFire() {
+        guard !aliens.isEmpty else { return }
+        
+        // Random alien fires
+        if let randomAlien = aliens.randomElement() {
+            let projectile = SKSpriteNode(color: matrixGreenDim, size: CGSize(width: 2, height: 6))
+            projectile.position = CGPoint(x: randomAlien.position.x, y: randomAlien.position.y - 8)
+            projectile.zPosition = 8
+            
+            projectile.physicsBody = SKPhysicsBody(rectangleOf: projectile.size)
+            projectile.physicsBody?.isDynamic = true
+            projectile.physicsBody?.categoryBitMask = PhysicsCategory.alienProjectile
+            projectile.physicsBody?.contactTestBitMask = PhysicsCategory.player | PhysicsCategory.obstacle
+            projectile.physicsBody?.collisionBitMask = PhysicsCategory.none
+            
+            addChild(projectile)
+            
+            let moveAction = SKAction.moveBy(x: 0, y: -size.height, duration: 1.5)
+            let removeAction = SKAction.removeFromParent()
+            projectile.run(SKAction.sequence([moveAction, removeAction]))
+        }
+    }
+    
+    private func spawnBonusAlien() {
+        let bonusTexture = SKTexture(imageNamed: "alien_9")
+        let bonus = SKSpriteNode(texture: bonusTexture)
+        bonus.color = matrixGreen
+        bonus.colorBlendFactor = 0.7
+        bonus.size = CGSize(width: 14, height: 14)
+        bonus.position = CGPoint(x: Bool.random() ? 0 : size.width, y: size.height - 20)
+        bonus.zPosition = 6
+        
+        bonus.physicsBody = SKPhysicsBody(circleOfRadius: 7)
+        bonus.physicsBody?.isDynamic = false
+        bonus.physicsBody?.categoryBitMask = PhysicsCategory.alien
+        bonus.physicsBody?.contactTestBitMask = PhysicsCategory.playerProjectile
+        bonus.physicsBody?.collisionBitMask = PhysicsCategory.none
+        
+        addChild(bonus)
+        bonusAliens.append(bonus)
+    }
+    
+    private func updateBonusAliens() {
+        for bonus in bonusAliens {
+            // Spiral movement
+            let time = CGFloat(Date().timeIntervalSince1970)
+            let speed: CGFloat = 2
+            
+            bonus.position.x += cos(time * speed) * 2
+            bonus.position.y += sin(time * speed) * 1.5 - 0.5
+            
+            // Remove if off screen
+            if bonus.position.y < 0 || bonus.position.x < -20 || bonus.position.x > size.width + 20 {
+                bonus.removeFromParent()
+                if let index = bonusAliens.firstIndex(of: bonus) {
+                    bonusAliens.remove(at: index)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Collision Detection
     func didBegin(_ contact: SKPhysicsContact) {
-        let maskA = contact.bodyA.categoryBitMask
-        let maskB = contact.bodyB.categoryBitMask
+        let collision = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
         
-        let nodeA = contact.bodyA.node
-        let nodeB = contact.bodyB.node
-        
-        // Projectile vs Alien
-        if (maskA == PhysicsCategory.projectile && maskB == PhysicsCategory.alien) ||
-           (maskB == PhysicsCategory.projectile && maskA == PhysicsCategory.alien) {
-            
-            let projectile = maskA == PhysicsCategory.projectile ? nodeA : nodeB
-            let alien = maskA == PhysicsCategory.alien ? nodeA : nodeB
-            
-            if let alien = alien, let projectile = projectile {
-                alienHit(alien: alien, projectile: projectile)
-            }
-        }
-        
-        // Projectile vs Obstacle
-        if (maskA == PhysicsCategory.projectile && maskB == PhysicsCategory.obstacle) ||
-           (maskB == PhysicsCategory.projectile && maskA == PhysicsCategory.obstacle) {
-            
-            let projectile = maskA == PhysicsCategory.projectile ? nodeA : nodeB
-            let obstacle = maskA == PhysicsCategory.obstacle ? nodeA : nodeB
-            
-            if let obstacle = obstacle as? ObstacleNode, let projectile = projectile {
-                obstacle.takeDamage()
-                projectile.removeFromParent()
-            }
+        if collision == (PhysicsCategory.playerProjectile | PhysicsCategory.alien) {
+            handleProjectileAlienCollision(contact)
+        } else if collision == (PhysicsCategory.playerProjectile | PhysicsCategory.obstacle) {
+            handleProjectileObstacleCollision(contact)
+        } else if collision == (PhysicsCategory.alienProjectile | PhysicsCategory.obstacle) {
+            handleAlienProjectileObstacleCollision(contact)
+        } else if collision == (PhysicsCategory.player | PhysicsCategory.alien) {
+            handlePlayerHit(contact)
+        } else if collision == (PhysicsCategory.alienProjectile | PhysicsCategory.player) {
+            handlePlayerHit(contact)
         }
     }
     
-    func alienHit(alien: SKNode, projectile: SKNode) {
-        createExplosion(at: alien.position)
+    private func handleProjectileAlienCollision(_ contact: SKPhysicsContact) {
+        let projectileNode = contact.bodyA.categoryBitMask == PhysicsCategory.playerProjectile ? contact.bodyA.node : contact.bodyB.node
+        let alienNode = contact.bodyA.categoryBitMask == PhysicsCategory.alien ? contact.bodyA.node : contact.bodyB.node
         
-        alien.removeFromParent()
-        projectile.removeFromParent()
+        projectileNode?.removeFromParent()
         
-        if let index = aliens.firstIndex(of: alien as! SKSpriteNode) {
+        // Check if it's a regular alien
+        if let alien = alienNode as? SKSpriteNode, let index = aliens.firstIndex(of: alien) {
+            // Explosion particle effect
+            createExplosion(at: alien.position)
+            
+            alien.removeFromParent()
             aliens.remove(at: index)
+            
+            score += 10
+            updateScore()
+            
+            // Check for victory
+            if aliens.isEmpty {
+                endGame(victory: true)
+            }
         }
-        
-        score += 10
-        
-        if aliens.isEmpty {
-            // Next Level or Respawns?
-            // For now, respawn faster
-            setupAliens()
-            alienMoveInterval *= 0.8
+        // Check if it's a bonus alien
+        else if let bonus = alienNode as? SKSpriteNode, let index = bonusAliens.firstIndex(of: bonus) {
+            // Bigger explosion for bonus
+            createExplosion(at: bonus.position, scale: 1.5)
+            
+            bonus.removeFromParent()
+            bonusAliens.remove(at: index)
+            
+            score += 50 // Bonus points!
+            updateScore()
         }
     }
     
-    func gameOver() {
+    private func handleProjectileObstacleCollision(_ contact: SKPhysicsContact) {
+        let projectileNode = contact.bodyA.categoryBitMask == PhysicsCategory.playerProjectile ? contact.bodyA.node : contact.bodyB.node
+        let obstacleNode = contact.bodyA.categoryBitMask == PhysicsCategory.obstacle ? contact.bodyA.node : contact.bodyB.node
+        
+        // Small impact effect
+        if let position = projectileNode?.position {
+            createImpactEffect(at: position)
+        }
+        
+        projectileNode?.removeFromParent()
+        
+        if let obstacle = obstacleNode as? Obstacle {
+            obstacle.takeDamage()
+        }
+    }
+    
+    
+    private func handleAlienProjectileObstacleCollision(_ contact: SKPhysicsContact) {
+        let projectileNode = contact.bodyA.categoryBitMask == PhysicsCategory.alienProjectile ? contact.bodyA.node : contact.bodyB.node
+        let obstacleNode = contact.bodyA.categoryBitMask == PhysicsCategory.obstacle ? contact.bodyA.node : contact.bodyB.node
+        
+        // Small impact effect
+        if let position = projectileNode?.position {
+            createImpactEffect(at: position, scale: 0.7)
+        }
+        
+        projectileNode?.removeFromParent()
+        
+        if let obstacle = obstacleNode as? Obstacle {
+            obstacle.takeDamage()
+        }
+    }
+    
+    private func handlePlayerHit(_ contact: SKPhysicsContact) {
         guard !isGameOver else { return }
-        isGameOver = true
-        removeAllActions()
         
-        createExplosion(at: player.position)
+        // Get the alien or projectile that hit the player
+        let alienNode: SKNode?
+        if contact.bodyA.categoryBitMask == PhysicsCategory.player {
+            alienNode = contact.bodyB.node
+        } else {
+            alienNode = contact.bodyA.node
+        }
         
-        run(SKAction.wait(forDuration: 1.0)) { [weak self] in
-            self?.gameOverAction?()
+        // Remove the alien/projectile that hit
+        alienNode?.removeFromParent()
+        
+        // Player hit effect
+        if let player = player {
+            createImpactEffect(at: player.position, scale: 1.5)
+            
+            // Flash player
+            let flash = SKAction.sequence([
+                SKAction.fadeAlpha(to: 0.3, duration: 0.1),
+                SKAction.fadeAlpha(to: 1.0, duration: 0.1)
+            ])
+            player.run(SKAction.repeat(flash, count: 3))
+        }
+        
+        // Lose a life
+        lives -= 1
+        updateLives()
+        
+        WKInterfaceDevice.current().play(.directionDown)
+        
+        if lives <= 0 {
+            endGame(victory: false)
         }
     }
     
-    func createExplosion(at position: CGPoint) {
+    // MARK: - Visual Effects
+    private func createExplosion(at position: CGPoint, scale: CGFloat = 1.0) {
         let emitter = SKEmitterNode()
-        // Use system image for localized small particles
-        if let uiImage = UIImage(systemName: "sparkles") {
-            emitter.particleTexture = SKTexture(image: uiImage)
-        }
-        emitter.particleBirthRate = 200
-        emitter.numParticlesToEmit = 15
-        emitter.particleLifetime = 0.4
-        emitter.particleSpeed = 30
-        emitter.particleSpeedRange = 10
-        emitter.emissionAngleRange = 360 * (.pi / 180)
-        emitter.particleScale = 0.05 // Much smaller
-        emitter.particleScaleRange = 0.02
-        emitter.particleColor = .green
-        emitter.particleColorBlendFactor = 1.0
-        emitter.particleAlpha = 1.0
-        emitter.particleAlphaSpeed = -2.0
         emitter.position = position
+        emitter.zPosition = 50
+        emitter.particleLifetime = 0.6
+        emitter.particleBirthRate = 200
+        emitter.numParticlesToEmit = 30
+        emitter.particleSpeed = 50 * scale
+        emitter.particleSpeedRange = 30
+        emitter.emissionAngleRange = .pi * 2
+        emitter.particleScale = 0.08 * scale
+        emitter.particleScaleRange = 0.04
+        emitter.particleScaleSpeed = -0.1
+        emitter.particleAlpha = 1.0
+        emitter.particleAlphaSpeed = -1.5
+        emitter.particleColor = matrixGreen
+        emitter.particleBlendMode = .add
+        
         addChild(emitter)
+        
+        // Auto-remove
+        let wait = SKAction.wait(forDuration: 1.0)
+        let remove = SKAction.removeFromParent()
+        emitter.run(SKAction.sequence([wait, remove]))
+    }
+    
+    private func createImpactEffect(at position: CGPoint, scale: CGFloat = 1.0) {
+        let emitter = SKEmitterNode()
+        emitter.position = position
+        emitter.zPosition = 50
+        emitter.particleLifetime = 0.3
+        emitter.particleBirthRate = 100
+        emitter.numParticlesToEmit = 10
+        emitter.particleSpeed = 30 * scale
+        emitter.particleSpeedRange = 15
+        emitter.emissionAngleRange = .pi * 2
+        emitter.particleScale = 0.05 * scale
+        emitter.particleScaleSpeed = -0.15
+        emitter.particleAlpha = 0.8
+        emitter.particleAlphaSpeed = -2.5
+        emitter.particleColor = matrixGreenDim
+        emitter.particleBlendMode = .add
+        
+        addChild(emitter)
+        
+        let wait = SKAction.wait(forDuration: 0.5)
+        let remove = SKAction.removeFromParent()
+        emitter.run(SKAction.sequence([wait, remove]))
+    }
+    
+    // MARK: - Game Over
+    private func updateScore() {
+        scoreLabel.text = "SCORE: \(score)"
+    }
+    
+    private func updateLives() {
+        livesLabel.text = "LIVES: \(lives)"
+    }
+    
+    private func endGame(victory: Bool) {
+        isGameOver = true
+        gameState = .gameOver
+        
+        // Hide game UI
+        scoreLabel.isHidden = true
+        livesLabel.isHidden = true
+        
+        // Show game over message
+        statusLabel.text = victory ? "VICTORY!\n\nTAP TO MENU" : "GAME OVER\n\nTAP TO MENU"
+        statusLabel.fontColor = matrixGreen
+        statusLabel.isHidden = false
+        
+        WKInterfaceDevice.current().play(victory ? .success : .failure)
     }
 }
 
-// MARK: - Obstacle Node
-class ObstacleNode: SKSpriteNode {
-    var health: Int = 4
-    var healthBar: SKShapeNode!
+// MARK: - Obstacle Class
+class Obstacle: SKSpriteNode {
+    private var health = 3
     
-    init() {
+    init(matrixGreen: SKColor) {
+        // Use asteroid texture with green tint
         let texture = SKTexture(imageNamed: "asteroid_1")
-        super.init(texture: texture, color: .green, size: CGSize(width: 25, height: 25))
+        super.init(texture: texture, color: matrixGreen, size: CGSize(width: 18, height: 18))
         
-        self.name = "obstacle"
-        self.color = .green
-        self.colorBlendFactor = 1.0
+        self.colorBlendFactor = 0.5
         
-        self.physicsBody = SKPhysicsBody(circleOfRadius: 10)
-        self.physicsBody?.categoryBitMask = PhysicsCategory.obstacle
-        self.physicsBody?.contactTestBitMask = 0
-        self.physicsBody?.collisionBitMask = 0
+        self.physicsBody = SKPhysicsBody(rectangleOf: self.size)
         self.physicsBody?.isDynamic = false
-        
-        setupHealthBar()
+        self.physicsBody?.categoryBitMask = GameScene.PhysicsCategory.obstacle
+        self.physicsBody?.contactTestBitMask = GameScene.PhysicsCategory.playerProjectile
+        self.physicsBody?.collisionBitMask = GameScene.PhysicsCategory.none
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setupHealthBar() {
-        let barSize = CGSize(width: 20, height: 3)
-        healthBar = SKShapeNode(rectOf: barSize)
-        healthBar.fillColor = .green
-        healthBar.strokeColor = .clear
-        healthBar.position = CGPoint(x: 0, y: self.size.height / 2 + 5)
-        addChild(healthBar)
-    }
-    
     func takeDamage() {
         health -= 1
         
-        // Update Health Bar
-        let healthPercent = CGFloat(health) / 4.0
-        healthBar.xScale = max(0, healthPercent)
-        
         if health <= 0 {
-            // Destroyed
-            createDebris()
+            // Create destruction animation with slices
+            createDestructionEffect()
             removeFromParent()
         } else {
-            let textureName = "asteroid_\(5 - health)" // 4->1, 3->2, 2->3, 1->4
-            self.texture = SKTexture(imageNamed: textureName)
+            // Update texture based on damage
+            let textureIndex = 4 - health // 3->2, 2->3, 1->4
+            self.texture = SKTexture(imageNamed: "asteroid_\(textureIndex)")
         }
     }
     
-    func createDebris() {
-        // Small explosion effect
+    private func createDestructionEffect() {
+        guard let parent = self.parent else { return }
+        
+        // Create 4 asteroid slice pieces that fly apart
+        for i in 1...4 {
+            let slice = SKSpriteNode(texture: SKTexture(imageNamed: "asteroid_4"))
+            slice.color = self.color
+            slice.colorBlendFactor = self.colorBlendFactor
+            slice.size = CGSize(width: 8, height: 8)
+            slice.position = self.position
+            slice.zPosition = self.zPosition
+            
+            parent.addChild(slice)
+            
+            // Random direction for each piece
+            let angle = CGFloat(i) * (.pi / 2) + CGFloat.random(in: -0.3...0.3)
+            let distance: CGFloat = 20
+            let dx = cos(angle) * distance
+            let dy = sin(angle) * distance
+            
+            // Fly apart and fade
+            let move = SKAction.moveBy(x: dx, y: dy, duration: 0.5)
+            let rotate = SKAction.rotate(byAngle: CGFloat.random(in: -.pi...(.pi)), duration: 0.5)
+            let fade = SKAction.fadeOut(withDuration: 0.5)
+            let remove = SKAction.removeFromParent()
+            
+            let group = SKAction.group([move, rotate, fade])
+            slice.run(SKAction.sequence([group, remove]))
+        }
     }
 }
