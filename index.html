@@ -3,198 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZetanInvader | WatchOS Tactical Sim</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            /* Pip-Boy Green Palette */
-            --terminal-green: #33ff33;
-            --terminal-dim: #008f00;
-            --terminal-bg: #0a0a0a;
-            --grid-color: rgba(51, 255, 51, 0.1);
-        }
-
-        body {
-            background-color: var(--terminal-bg);
-            color: var(--terminal-green);
-            font-family: 'VT323', monospace;
-            margin: 0;
-            padding: 0;
-            line-height: 1.4;
-            font-size: 1.3rem;
-            overflow-x: hidden;
-            
-            /* CRT Grid Effect */
-            background-image: 
-                linear-gradient(var(--grid-color) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        /* Scanline Overlay */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 100;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            position: relative;
-            z-index: 101;
-        }
-
-        /* Glitch/Flicker Animation for Titles */
-        @keyframes flicker {
-            0% { opacity: 0.9; }
-            5% { opacity: 0.8; }
-            10% { opacity: 1; }
-            15% { opacity: 0.1; }
-            20% { opacity: 1; }
-            100% { opacity: 1; }
-        }
-
-        h1 {
-            font-size: 4rem;
-            text-transform: uppercase;
-            text-shadow: 0 0 10px var(--terminal-green);
-            margin-bottom: 0;
-            text-align: center;
-            animation: flicker 4s infinite;
-        }
-
-        .subtitle {
-            text-align: center;
-            border-bottom: 2px solid var(--terminal-green);
-            padding-bottom: 1rem;
-            margin-bottom: 2rem;
-            color: var(--terminal-dim);
-            letter-spacing: 2px;
-        }
-
-        .section-box {
-            border: 1px solid var(--terminal-green);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 0 15px rgba(51, 255, 51, 0.1);
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-
-        h2 {
-            margin-top: 0;
-            background-color: var(--terminal-green);
-            color: var(--terminal-bg);
-            display: inline-block;
-            padding: 0 10px;
-            text-transform: uppercase;
-        }
-
-        /* Simulating the ship if image is missing, otherwise frames the image */
-        .hero-image {
-            display: block;
-            margin: 0 auto 2rem auto;
-            width: 128px;
-            height: 128px;
-            border: 2px dashed var(--terminal-dim);
-            /* Place 'ship.png' in the same folder */
-            background-image: url('ship.png'); 
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: pixelated;
-        }
-
-        ul.data-list {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        ul.data-list li::before {
-            content: "> ";
-            color: var(--terminal-dim);
-        }
-
-        a {
-            color: var(--terminal-green);
-            text-decoration: underline;
-        }
-
-        a:hover {
-            background-color: var(--terminal-green);
-            color: var(--terminal-bg);
-            text-decoration: none;
-        }
-
-        footer {
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--terminal-dim);
-            margin-top: 4rem;
-        }
-    </style>
+    <title>ROBCO INDUSTRIES | ZETAN INVADER</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <div class="hero-image" title="Zetan Ship Asset"></div>
-        <h1>Zetan Invader</h1>
-        <div class="subtitle">WATCH_OS // SIMULATION_V1.0 // PIP-BOY_COMPATIBLE</div>
-    </header>
+    <div class="screen-overlay"></div>
+    <div class="scanline"></div>
+    
+    <div class="terminal-wrapper">
+        <div class="screen-content">
+            
+            <div id="boot-sequence">
+                <p>ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL</p>
+                <p>ENTER PASSWORD NOW</p>
+                <p class="loading">INITIALIZING...</p>
+                <p>4 KB FREE SYSTEM MEMORY</p>
+                <p>> LOAD "ZETAN_INVADER.EXE"</p>
+                <p>> RUNNING...</p>
+            </div>
 
-    <div class="section-box">
-        <h2>:: LORE DATABASE ::</h2>
-        <p>
-            <strong>ARCHIVE REFERENCE:</strong> Holotape "Zeta Invaders" [Source: Nick Valentine's Desk / Diamond City]
-        </p>
-        <p>
-            Recovered from the archives of the Commonwealth, the <strong>Zetan Invaders</strong> program was originally a static defense simulation found on RobCo Fun magazines. The goal was simple: destroy the alien fleet before they made planetfall.
-        </p>
-        <p>
-            <strong>UPDATE:</strong> This software has been recompiled for modern wrist-mounted hardware (watchOS). The simulation has evolved. You are no longer manning a turret; you are piloting an interceptor. The Zetan threat is now a survival endurance test through a digital asteroid field.
-        </p>
+            <main id="main-interface" style="display:none;">
+                
+                <header class="pip-header">
+                    <div class="header-decoration">
+                        <span>HP 99/99</span>
+                        <span>AP 85/90</span>
+                    </div>
+                    <h1>ZETAN INVADER</h1>
+                    <div class="header-decoration">
+                        <span>LVL 50</span>
+                        <span>RADS 0</span>
+                    </div>
+                </header>
+
+                <nav class="pip-tabs">
+                    <button class="tab-btn active" onclick="openTab('status')">STATUS</button>
+                    <button class="tab-btn" onclick="openTab('data')">DATA</button>
+                    <button class="tab-btn" onclick="openTab('privacy')">PRIVACY</button>
+                </nav>
+
+                <div class="content-area">
+                    
+                    <div id="status" class="tab-content active">
+                        <div class="hero-section">
+                            <div class="ship-container">
+                                <img src="ship.png" alt="Zetan Fighter" class="ship-image">
+                            </div>
+                            <div class="stats-box">
+                                <p class="typewriter">WARNING: ZETAN FLEET DETECTED.</p>
+                                <p>DEFEND THE COMMONWEALTH.</p>
+                                <br>
+                                <ul class="green-list">
+                                    <li>WEAPON: PLASMA BOLT</li>
+                                    <li>SHIELD: NONE (1 HIT KO)</li>
+                                    <li>TARGET: SURVIVAL</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="data" class="tab-content">
+                        <h2>// MISSION_BRIEFING</h2>
+                        <p>Recovered from the pre-war archives, this simulation trains you to intercept the alien threat. Pilot your vessel through the void, dodge asteroid debris, and return fire.</p>
+                        
+                        <div class="holotape-box">
+                            <h3>:: CONTROLS ::</h3>
+                            <ul>
+                                <li>[DIGITAL CROWN] > STEER SHIP</li>
+                                <li>[TAP SCREEN] > FIRE PLASMA</li>
+                            </ul>
+                        </div>
+                        
+                        <p>FEATURES:</p>
+                        <ul>
+                            <li>RETRO-FUTURISTIC DOT MATRIX DISPLAY</li>
+                            <li>HAPTIC FEEDBACK ENABLED</li>
+                            <li>LOCAL HIGH SCORE DATABASE</li>
+                        </ul>
+                    </div>
+
+                    <div id="privacy" class="tab-content">
+                        <h2>// SECURE_TERMINAL_V1</h2>
+                        <p>> QUERY: DATA_COLLECTION</p>
+                        <p>> RESULT: NEGATIVE.</p>
+                        <br>
+                        <p>Zetan Invader does NOT collect, store, or transmit personal data. All combat logs remain locally on your Pip-Boy (Apple Watch).</p>
+                        <br>
+                        <p>> CONTACT: <a href="mailto:aristideslintzeris@icloud.com">OVERSEER</a></p>
+                    </div>
+
+                </div>
+
+                <footer class="pip-footer">
+                    <div class="scrolling-text">
+                        <span>*** DEVELOPED BY ARISTIDES LINTZERIS *** STAND BY *** COPYRIGHT 2026 ***</span>
+                    </div>
+                </footer>
+
+            </main>
+        </div>
     </div>
 
-    <div class="section-box">
-        <h2>:: FLIGHT MANUAL ::</h2>
-        <p>Pilot your vessel through the void while dodging debris and returning fire. A nostalgic green-on-black dot matrix display brings the retro-future to your wrist.</p>
-        
-        <ul class="data-list">
-            <li><strong>DIGITAL CROWN:</strong> Rotate for precision steering [Left/Right].</li>
-            <li><strong>TAP SCREEN:</strong> Engage plasma cannons.</li>
-            <li><strong>HAPTICS:</strong> Force feedback enabled for impacts and weapons fire.</li>
-        </ul>
-        
-        <p><em>WARNING: One hit from an asteroid or enemy fighter results in immediate hull failure (Game Over).</em></p>
-    </div>
+    <script>
+        // Simple script to handle the "Boot up" sequence and Tabs
+        window.onload = function() {
+            setTimeout(() => {
+                document.getElementById('boot-sequence').style.display = 'none';
+                document.getElementById('main-interface').style.display = 'block';
+            }, 3500); // 3.5 seconds boot time
+        }
 
-    <div class="section-box">
-        <h2>:: PRIVACY PROTOCOL ::</h2>
-        <p><strong>STATUS: SECURE</strong></p>
-        <p>Zetan Invader does <strong>NOT</strong> collect, store, or transmit any personal data. There are no tracking beacons, no advertising identifiers, and no third-party uplinks.</p>
-        <p>All flight logs (High Scores) are stored locally on your device.</p>
-        <p style="font-size: 0.9em; color: var(--terminal-dim);">[Last Updated: 06/01/2026]</p>
-    </div>
-
-    <footer>
-        <p>DEVELOPED BY ARISTIDES LINTZERIS</p>
-        <p>INSPIRED BY FALLOUT 4 & SPACE INVADERS (1978)</p>
-        <p><a href="mailto:aristideslintzeris@icloud.com">CONTACT COMMAND</a></p>
-    </footer>
-</div>
-
+        function openTab(tabName) {
+            var i;
+            var x = document.getElementsByClassName("tab-content");
+            var tabs = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+                x[i].classList.remove('active');
+            }
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            document.getElementById(tabName).style.display = "block";
+            // Add a small delay for opacity animation
+            setTimeout(() => {
+                document.getElementById(tabName).classList.add('active');
+            }, 10);
+            
+            // Highlight the button
+            event.currentTarget.classList.add('active');
+        }
+    </script>
 </body>
 </html>
