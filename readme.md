@@ -1,39 +1,41 @@
-# ZetanInvader
+# Zetan Invader
+A retro-futuristic arcade survival shooter for Apple Watch — inspired by classic "Invader" games and Fallout-style green-on-black aesthetics. Pilot the Zetan ship through a hazardous digital asteroid field. Dodge asteroids, outmaneuver enemy fighters, and score as many points as possible before your run ends. The UI evokes a dot-matrix "green phosphor" display, with tactile haptics to enhance immersion.
 
-A retro-futuristic arcade survival game for watchOS, inspired by the classic "Invader" themes and Fallout aesthetics.
+### Controls
+- Digital Crown — Rotate to steer your ship left and right. Movement is smooth and responsive for precision control.
+- Tap Screen — Fire plasma bolts to destroy enemies and break asteroids.
+- Haptics — Taptic feedback accompanies hits, explosions, and special events for better situational awareness.
 
-## Description
-Pilot your Zetan ship through a digital asteroid field while dodging incoming enemy fighters. Styled with a nostalgic green-on-black dot matrix display.
 
-## Controls
-- **Digital Crown**: Rotate to steer your ship left and right.
-- **Tap Screen**: Fire plasma bolts to destroy enemies.
+### Gameplay
+- Lives: You start with 3 lives. Each hit removes one life; losing all lives ends the run.
+- Objective: Survive as long as possible while racking up score by destroying enemies and collecting bonuses.
+- Difficulty: The spawn rate and behavior of enemies scale up over time to increase challenge.
+- Scoring: Standard enemies give points, while rare targets (e.g., Bonus Spiral Aliens) yield higher rewards.
 
-## Gameplay
-- **Avoid** asteroids and enemy ships. One hit implies Game Over.
-- **Shoot** enemies for bonus points.
-- **Survive** as long as possible. The difficulty increases over time (enemies spawn faster).
+Core loop:
+1. Steer through the field (avoid collisions).
+2. Shoot enemies and destructible asteroids for points and cover.
+3. Preserve lives and survive longer to reach higher difficulty and scores.
+4. Improve your best run and unlock bragging rights on the High Score table.
 
-## Features
-- **Retro Aesthetic**: Pixel-perfect green graphics.
-- **Haptic Feedback**: Feel the blasts and crashes.
-- **High Score**: Track your best survival run.
 
-## Credits
-- Developed by Aristides Lintzeris
+### Features
+- Retro Aesthetic: Authentic green-on-black dot-matrix visuals and pixel-perfect sprites.
+- Haptic Feedback: Taptic Engine support for blasts, collisions, and important in-game events.
+- 3-Life System: Tactical health that rewards careful dodging and positioning.
+- Smooth Motion: High-frame-rate interpolation and crown-driven controls for precise movement.
+- Visual FX: Sprite-less particle explosions and smooth animations for satisfying feedback.
+- Pick-Up-And-Play: Instant start — minimal loading and immediate gameplay.
+- Adaptive Difficulty: Enemy behavior and spawn rates scale as you survive longer.
+- Elite Enemy AI: Enemies coordinate and accelerate as you clear waves; watch for high-value bonus targets.
 
-**THE INVADERS ARE HERE.** Relive the golden age of arcade gaming with Zetan Invader, a high-octane space shooter optimized perfectly for the Apple Watch. Experience the classic "shoot 'em up" gameplay with a premium modern feel and a stunning dot-matrix aesthetic.
+### Tips & Strategy
+- Use asteroids as temporary cover, but remember they can be destroyed.
+- Conserve movement — small crown adjustments are usually better than large swings.
+- Prioritize high-value targets (Bonus Spiral Aliens) when it's safe — they give a large score boost.
+- Keep an eye on spawn patterns; the alien grid accelerates as waves clear.
 
-**PRECISION CONTROLS** Forget clunky touch controls. Zetan Invader uses the Digital Crown for ultra-responsive horizontal movement. Combined with high-frame-rate interpolation, your ship glides across the screen with surgical precision. Tap anywhere to unleash a barrage of green laser fire.
-
-**STRATEGIC DEFENSE** Use the environment to your advantage. Deploy behind destructible asteroid barriers to shield yourself from incoming enemy fire. Watch as the asteroids take realistic damage, chipping away until they vanish—use them wisely, or you’ll be left wide open!
-
-**ELITE ENEMY AI** It’s not just a shooting gallery. The alien grid moves with increasing speed as you clear their ranks. Watch out for the Bonus Spiral Aliens—rare, high-value targets that move in unpredictable patterns. Sack them for 50 bonus points to climb the leaderboard!
-
-## KEY FEATURES:
-
-- Haptic Feedback: Feel every impact and explosion through the Apple Watch Taptic Engine.
-- 3-Life System: Survive the onslaught with a tactical health system and visual damage indicators.
-- Retro Aesthetic: A beautiful dot-matrix "Green Phosphor" UI that mimics classic 80s hardware.
-- Visual FX: Spriteless particle explosions and smooth animations make every victory feel impactful.
-- Pick-Up-And-Play: Zero load times. Launch from your watch face and start blasting in seconds.
+## Contact
+Developed by Aristides Lintzeris
+THE INVADERS ARE HERE — relive arcade thrills with Zetan Invader: pinpoint crown controls, tactile feedback, and satisfying retro visuals optimized for the Apple Watch.
