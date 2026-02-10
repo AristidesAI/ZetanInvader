@@ -1,4 +1,4 @@
-# Privacy Policy for Zetan Invader
+# Privacy Policy for Zetan Invader & Circle Watch
 Last updated: 06/01/2026
 ## Data Collection
 Zetan Invader does NOT collect, store, or transmit any personal data.

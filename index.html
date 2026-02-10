@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROBCO INDUSTRIES | ZETAN INVADER</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="screen-overlay"></div>
+    <div class="scanline"></div>
+    
+    <div class="terminal-wrapper">
+        <div class="screen-content">
+            
+            <div id="boot-sequence">
+                <p>ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL</p>
+                <p>ENTER PASSWORD NOW</p>
+                <p class="loading">INITIALIZING...</p>
+                <p>4 KB FREE SYSTEM MEMORY</p>
+                <p>> LOAD "ZETAN_INVADER.EXE"</p>
+                <p>> RUNNING...</p>
+            </div>
+
+            <main id="main-interface" style="display:none;">
+                
+                <header class="pip-header">
+                    <div class="header-decoration">
+                        <span>HP 99/99</span>
+                        <span>AP 85/90</span>
+                    </div>
+                    <h1>ZETAN INVADER</h1>
+                    <div class="header-decoration">
+                        <span>LVL 50</span>
+                        <span>RADS 0</span>
+                    </div>
+                </header>
+
+                <nav class="pip-tabs">
+                    <button class="tab-btn active" onclick="openTab('status')">STATUS</button>
+                    <button class="tab-btn" onclick="openTab('data')">DATA</button>
+                    <button class="tab-btn" onclick="openTab('privacy')">PRIVACY</button>
+                </nav>
+
+                <div class="content-area">
+                    
+                    <div id="status" class="tab-content active">
+                        <div class="hero-section">
+                            <div class="ship-container">
+                                <img src="ship.png" alt="Zetan Fighter" class="ship-image">
+                            </div>
+                            <div class="stats-box">
+                                <p class="typewriter">WARNING: ZETAN FLEET DETECTED.</p>
+                                <p>DEFEND THE COMMONWEALTH.</p>
+                                <br>
+                                <ul class="green-list">
+                                    <li>WEAPON: PLASMA BOLT</li>
+                                    <li>SHIELD: NONE (1 HIT KO)</li>
+                                    <li>TARGET: SURVIVAL</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="data" class="tab-content">
+                        <h2>// MISSION_BRIEFING</h2>
+                        <p>Recovered from the pre-war archives, this simulation trains you to intercept the alien threat. Pilot your vessel through the void, dodge asteroid debris, and return fire.</p>
+                        
+                        <div class="holotape-box">
+                            <h3>:: CONTROLS ::</h3>
+                            <ul>
+                                <li>[DIGITAL CROWN] > STEER SHIP</li>
+                                <li>[TAP SCREEN] > FIRE PLASMA</li>
+                            </ul>
+                        </div>
+                        
+                        <p>FEATURES:</p>
+                        <ul>
+                            <li>RETRO-FUTURISTIC DOT MATRIX DISPLAY</li>
+                            <li>HAPTIC FEEDBACK ENABLED</li>
+                            <li>LOCAL HIGH SCORE DATABASE</li>
+                        </ul>
+                    </div>
+
+                    <div id="privacy" class="tab-content">
+                        <h2>// SECURE_TERMINAL_V1</h2>
+                        <p>> QUERY: DATA_COLLECTION</p>
+                        <p>> RESULT: NEGATIVE.</p>
+                        <br>
+                        <p>Zetan Invader does NOT collect, store, or transmit personal data. All combat logs remain locally on your Pip-Boy (Apple Watch).</p>
+                        <br>
+                        <p>> CONTACT: <a href="mailto:aristideslintzeris@icloud.com">OVERSEER</a></p>
+                    </div>
+
+                </div>
+
+                <footer class="pip-footer">
+                    <div class="scrolling-text">
+                        <span>*** DEVELOPED BY ARISTIDES LINTZERIS *** STAND BY *** COPYRIGHT 2026 ***</span>
+                    </div>
+                </footer>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Simple script to handle the "Boot up" sequence and Tabs
+        window.onload = function() {
+            setTimeout(() => {
+                document.getElementById('boot-sequence').style.display = 'none';
+                document.getElementById('main-interface').style.display = 'block';
+            }, 3500); // 3.5 seconds boot time
+        }
+
+        function openTab(tabName) {
+            var i;
+            var x = document.getElementsByClassName("tab-content");
+            var tabs = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+                x[i].classList.remove('active');
+            }
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            document.getElementById(tabName).style.display = "block";
+            // Add a small delay for opacity animation
+            setTimeout(() => {
+                document.getElementById(tabName).classList.add('active');
+            }, 10);
+            
+            // Highlight the button
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>
