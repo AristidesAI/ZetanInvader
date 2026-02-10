@@ -1,7 +1,7 @@
-# Privacy Policy for Zetan Invader & Vortex Watch
+# Privacy Policy for Zetan Invader & Vortex Watch & IceDrift
 Last updated: 06/01/2026
 ## Data Collection
-Zetan Invader nor VortexWatch does NOT collect, store, or transmit any personal data.
+Zetan Invader nor VortexWatch nor IceDrift do NOT collect, store, or transmit any personal data. Icedrift captures advertising data which is anonymized
 ## What We Don't Collect
 - No personal information
 - No location data
