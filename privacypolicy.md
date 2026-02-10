@@ -1,7 +1,7 @@
-# Privacy Policy for Zetan Invader & Circle Watch
+# Privacy Policy for Zetan Invader & Vortex Watch
 Last updated: 06/01/2026
 ## Data Collection
-Zetan Invader does NOT collect, store, or transmit any personal data.
+Zetan Invader nor VortexWatch does NOT collect, store, or transmit any personal data.
 ## What We Don't Collect
 - No personal information
 - No location data
