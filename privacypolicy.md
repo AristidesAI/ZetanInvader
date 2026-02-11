@@ -1,7 +1,7 @@
 # Privacy Policy for Zetan Invader,Vortex Watch, GestureDJ & IceDrift
 Last updated: 11/01/2026
 ## Data Collection
-Zetan Invader nor VortexWatch nor IceDrift do NOT collect, store, or transmit any personal data. Icedrift captures advertising data which is anonymized.
+Zetan Invader, VortexWatch & GestureDJ do NOT collect, store, or transmit any personal data. Icedrift captures advertising data which is anonymized.
 ## What We Don't Collect (Zetan Invaders, Vortex Watch, GestureDJ)
 - No personal information
 - No location data
