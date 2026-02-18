@@ -21,3 +21,4 @@ Our app does not collect any data from anyone, including children under 9.
 We may update this policy. Changes will be posted on this page.
 ## Contact
 See Github Profile
+google.com, pub-6206220980753916, DIRECT, f08c47fec0942fa0
